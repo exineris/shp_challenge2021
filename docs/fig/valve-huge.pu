@@ -1,0 +1,47 @@
+@startuml
+
+[*] --> Init : PLC 電源 ON
+Init: 入力弁初期化, safe=false
+
+Init --> unsafe_open: open_limit == ture
+Init --> half_open: close_limit != true && open_limit != true
+Init --> closed: close_limit == true
+
+unsafe_open: safe=false
+half_open: safe=false
+open_delay: safe=false
+close_delay: safe=false
+unsafe_to_close: safe=false
+unsafe_closed: safe=false
+
+open: safe=true
+to_open: safe=true
+closed: safe=true
+to_close: safe=true
+
+half_open --> unsafe_open: open_limit == true
+half_open --> unsafe_closed: close_limit == true
+
+unsafe_open --> unsafe_to_close: close_valve
+half_open --> unsafe_to_close: close_valve
+unsafe_to_close --> unsafe_closed: close_limit == true
+unsafe_closed --> Init: error_reset
+unsafe_to_close --> close_delay: timed_out
+close_delay --> unsafe_closed: close_limit == true
+
+
+closed --> to_open: open_valve
+to_open --> open: open_limit == true
+open --> to_close: close_valve
+to_close --> closed: close_limit == true
+to_open --> to_close: close_valve
+to_open --> open_delay: timed_out
+to_close --> close_delay: timed_out
+
+open_delay --> unsafe_open: open_limit == true
+open_delay --> unsafe_to_close: close_valve
+
+close_delay --> Init: error_reset
+
+
+@enduml

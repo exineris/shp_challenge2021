@@ -1,0 +1,31 @@
+@startuml
+hide empty description
+
+[*] --> init : PLC 電源 ON
+init: initialize butterfly valve
+
+init --> valve_operation: close_limit == true
+init -r-> init_failure: close_limit\n == false
+
+state valve_operation {
+    [*] -d-> closed
+    closed -l-> to_open: op_open\n &&\n state == :ok
+    to_open -d-> open: open_limit\n == true
+    open -r-> to_close: op_close
+    to_close -u-> closed: close_limit\n == true
+    to_open --> to_close: op_close
+
+    ||
+
+    [*] -d-> normal
+    normal --> in_operation: op_open || op_close
+    in_operation --> normal: open_limit\n || close_limit
+    in_operation --> error: timed_out
+    error --> normal: close_limit == true\n && error_reset
+
+    normal: state = :ok
+    in_operation: set_timer
+    error: state = :error
+}
+
+@enduml
